@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Fix My Takeout",
+  "version": "1.0.0",
+  "identifier": "com.johannesmutter.fix-my-takeout",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Fix My Takeout",
+        "width": 700,
+        "height": 500,
+        "minWidth": 600,
+        "minHeight": 420,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
+      }
+    ],
+    "macOSPrivateApi": true,
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "entitlements": null,
+      "minimumSystemVersion": "13.0"
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "REPLACE_WITH_PUBLIC_KEY_AFTER_RUNNING_tauri_signer_generate",
+      "endpoints": [
+        "https://github.com/johannesmutter/fix-my-takeout/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}

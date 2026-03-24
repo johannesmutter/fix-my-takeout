@@ -1,0 +1,9 @@
+pub mod orchestrator;
+pub mod extractor;
+pub mod metadata_loader;
+pub mod cataloger;
+pub mod organizer;
+pub mod dedup;
+pub mod pairer;
+pub mod symlinker;
+pub mod reporter;
