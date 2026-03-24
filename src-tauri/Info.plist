@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleDisplayName</key>
-  <string>Takeout Cleaner</string>
+  <string>Fix My Takeout</string>
   <key>CFBundleGetInfoString</key>
-  <string>Takeout Cleaner — Clean your Cloud Takeout in minutes</string>
+  <string>Fix My Takeout — Organize your iCloud and Google Photos export</string>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.photography</string>
 </dict>

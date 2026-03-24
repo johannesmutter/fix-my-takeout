@@ -204,8 +204,9 @@ fn generate_catalogue(conn: &Connection, output_dir: &Path) -> Result<(), String
     padding: 4px 24px; align-items: center; font-size: 13px;
     position: absolute; left: 0; right: 0;
   }}
+  .row {{ cursor: pointer; }}
   .row:hover {{ background: var(--row-hover); }}
-  .row-thumb {{
+  .row-thumb, .row-thumb-video {{
     width: 36px; height: 36px; border-radius: 4px; object-fit: cover;
     background: var(--thumb-bg); flex-shrink: 0;
   }}
@@ -229,16 +230,33 @@ fn generate_catalogue(conn: &Connection, output_dir: &Path) -> Result<(), String
     font-variant-numeric: tabular-nums;
   }}
 
+  /* List header for sorting */
+  .list-header {{
+    display: grid; grid-template-columns: 36px 2fr 1fr 80px 100px; gap: 10px;
+    padding: 6px 24px; font-size: 11px; font-weight: 600; color: var(--secondary);
+    text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0; user-select: none;
+  }}
+  .list-header span {{ cursor: pointer; display: flex; align-items: center; gap: 3px; }}
+  .list-header span:hover {{ color: var(--text); }}
+  .sort-arrow {{ font-size: 9px; }}
+
   /* Grid view */
-  .grid-container {{ flex: 1; overflow-y: auto; position: relative; display: none; }}
+  .grid-container {{ flex: 1; overflow-y: auto; position: relative; }}
   .grid-spacer {{ position: relative; }}
   .grid-item {{
     position: absolute; display: flex; flex-direction: column;
     overflow: hidden; cursor: default;
   }}
-  .grid-thumb {{
+  .grid-thumb, .grid-thumb-video {{
     width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px;
     background: var(--thumb-bg); display: block;
+  }}
+  .grid-item {{ cursor: pointer; }}
+  .vid-badge {{
+    position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.55);
+    color: #fff; font-size: 9px; font-weight: 600; padding: 1px 5px;
+    border-radius: 3px; letter-spacing: 0.3px;
   }}
   .grid-thumb-placeholder {{
     width: 100%; aspect-ratio: 1; border-radius: 6px; background: var(--thumb-bg);
@@ -271,10 +289,17 @@ fn generate_catalogue(conn: &Connection, output_dir: &Path) -> Result<(), String
 </nav>
 <div class="toolbar" id="filters"></div>
 
+<div class="list-header" id="list-header">
+  <span></span>
+  <span data-col="name">Name <span class="sort-arrow" id="sort-name"></span></span>
+  <span data-col="type">Type <span class="sort-arrow" id="sort-type"></span></span>
+  <span data-col="date">Date <span class="sort-arrow" id="sort-date"></span></span>
+  <span data-col="size">Size <span class="sort-arrow" id="sort-size"></span></span>
+</div>
 <div class="viewport" id="viewport">
   <div class="spacer" id="spacer"></div>
 </div>
-<div class="grid-container" id="grid-container">
+<div class="grid-container" id="grid-container" style="display:none">
   <div class="grid-spacer" id="grid-spacer"></div>
 </div>
 
@@ -321,13 +346,49 @@ const viewport = document.getElementById('viewport');
 const spacer = document.getElementById('spacer');
 const gridContainer = document.getElementById('grid-container');
 const gridSpacer = document.getElementById('grid-spacer');
+const listHeader = document.getElementById('list-header');
 const btnGrid = document.getElementById('btn-grid');
 const btnList = document.getElementById('btn-list');
 
 let filtered = DATA;
 let renderedRows = new Map();
 let renderedGrid = new Map();
-let viewMode = 'grid'; // 'list' or 'grid'
+let viewMode = 'grid';
+
+// Sorting state
+let sortCol = 'date';
+let sortAsc = false; // newest first by default
+const sortArrows = {{ name: document.getElementById('sort-name'), type: document.getElementById('sort-type'), date: document.getElementById('sort-date'), size: document.getElementById('sort-size') }};
+
+function updateSortArrows() {{
+  Object.entries(sortArrows).forEach(([col, el]) => {{
+    el.textContent = col === sortCol ? (sortAsc ? '\u25B2' : '\u25BC') : '';
+  }});
+}}
+
+function sortFiltered() {{
+  const col = sortCol;
+  const dir = sortAsc ? 1 : -1;
+  filtered.sort((a, b) => {{
+    let va, vb;
+    if (col === 'name') {{ va = a[0].toLowerCase(); vb = b[0].toLowerCase(); return va < vb ? -dir : va > vb ? dir : 0; }}
+    if (col === 'type') {{ va = a[2]; vb = b[2]; return va < vb ? -dir : va > vb ? dir : 0; }}
+    if (col === 'date') {{ va = a[4] || ''; vb = b[4] || ''; return va < vb ? -dir : va > vb ? dir : 0; }}
+    if (col === 'size') {{ return (a[3] - b[3]) * dir; }}
+    return 0;
+  }});
+}}
+
+listHeader.querySelectorAll('[data-col]').forEach(el => {{
+  el.onclick = () => {{
+    const col = el.dataset.col;
+    if (sortCol === col) {{ sortAsc = !sortAsc; }}
+    else {{ sortCol = col; sortAsc = col === 'name' || col === 'type'; }}
+    updateSortArrows();
+    applyFilter();
+  }};
+}});
+updateSortArrows();
 
 // Grid sizing
 const GRID_GAP = 8;
@@ -353,9 +414,29 @@ function isImageFile(mediaType) {{
   return IMAGE_TYPES.has(mediaType);
 }}
 
+function isVideoFile(mediaType) {{
+  return VIDEO_TYPES.has(mediaType);
+}}
+
 function getExt(filename) {{
   const dot = filename.lastIndexOf('.');
   return dot > 0 ? filename.substring(dot + 1).toUpperCase() : '';
+}}
+
+function revealInFinder(absPath) {{
+  // Open the parent folder and select the file using macOS `open -R`
+  // This works when the HTML is opened locally
+  window.location.href = 'file://' + encodeURI(absPath.substring(0, absPath.lastIndexOf('/')));
+}}
+
+function makeVideoThumb(absPath, className) {{
+  const video = document.createElement('video');
+  video.className = className;
+  video.src = fileUrl(absPath);
+  video.muted = true;
+  video.preload = 'metadata';
+  video.addEventListener('loadedmetadata', () => {{ video.currentTime = Math.min(1, video.duration * 0.1); }});
+  return video;
 }}
 
 function fmtDate(d) {{
@@ -370,6 +451,7 @@ function applyFilter() {{
     if (q && !d[0].toLowerCase().includes(q)) return false;
     return true;
   }});
+  sortFiltered();
   countEl.textContent = filtered.length.toLocaleString() + ' files';
 
   if (viewMode === 'list') {{
@@ -419,15 +501,33 @@ function renderList() {{
     row.className = 'row';
     row.style.top = (i * ROW_H) + 'px';
     row.style.height = ROW_H + 'px';
+    row.onclick = () => revealInFinder(d[1]);
+    row.title = 'Click to reveal in Finder';
 
-    let thumbHtml;
-    if (isImageFile(d[2])) {{
-      thumbHtml = `<img class="row-thumb" src="${{fileUrl(d[1])}}" loading="lazy" onerror="this.outerHTML='<div class=row-thumb-placeholder>${{getExt(d[0])}}</div>'" />`;
+    if (isVideoFile(d[2])) {{
+      const vid = makeVideoThumb(d[1], 'row-thumb-video');
+      row.appendChild(vid);
+    }} else if (isImageFile(d[2])) {{
+      const img = document.createElement('img');
+      img.className = 'row-thumb';
+      img.src = fileUrl(d[1]);
+      img.loading = 'lazy';
+      img.onerror = function() {{ this.outerHTML = '<div class="row-thumb-placeholder">' + getExt(d[0]) + '</div>'; }};
+      row.appendChild(img);
     }} else {{
-      thumbHtml = `<div class="row-thumb-placeholder">${{getExt(d[0])}}</div>`;
+      const ph = document.createElement('div');
+      ph.className = 'row-thumb-placeholder';
+      ph.textContent = getExt(d[0]);
+      row.appendChild(ph);
     }}
 
-    row.innerHTML = `${{thumbHtml}}<span class="fname" title="${{esc(d[0])}}">${{esc(d[0])}}</span><span class="ftype">${{esc(d[2].replace(/_/g, ' '))}}</span><span class="fdate">${{fmtDate(d[4])}}</span><span class="fsize">${{fmtSize(d[3])}}</span>`;
+    const frag = document.createDocumentFragment();
+    const fname = document.createElement('span'); fname.className = 'fname'; fname.textContent = d[0]; frag.appendChild(fname);
+    const ftype = document.createElement('span'); ftype.className = 'ftype'; ftype.textContent = d[2].replace(/_/g, ' '); frag.appendChild(ftype);
+    const fdate = document.createElement('span'); fdate.className = 'fdate'; fdate.textContent = fmtDate(d[4]); frag.appendChild(fdate);
+    const fsize = document.createElement('span'); fsize.className = 'fsize'; fsize.textContent = fmtSize(d[3]); frag.appendChild(fsize);
+    row.appendChild(frag);
+
     spacer.appendChild(row);
     renderedRows.set(i, row);
   }}
@@ -458,23 +558,53 @@ function renderGrid() {{
   for (const idx of visible) {{
     if (renderedGrid.has(idx)) continue;
     const d = filtered[idx];
-    const col = idx % cols;
-    const row = Math.floor(idx / cols);
+    const c = idx % cols;
+    const r = Math.floor(idx / cols);
 
     const item = document.createElement('div');
     item.className = 'grid-item';
-    item.style.left = (GRID_PAD + col * (cellSize + GRID_GAP)) + 'px';
-    item.style.top = (row * cellH) + 'px';
+    item.style.left = (GRID_PAD + c * (cellSize + GRID_GAP)) + 'px';
+    item.style.top = (r * cellH) + 'px';
     item.style.width = cellSize + 'px';
+    item.onclick = () => revealInFinder(d[1]);
+    item.title = 'Click to reveal in Finder';
 
-    let thumbHtml;
-    if (isImageFile(d[2])) {{
-      thumbHtml = `<img class="grid-thumb" src="${{fileUrl(d[1])}}" loading="lazy" onerror="this.outerHTML='<div class=grid-thumb-placeholder>${{getExt(d[0])}}</div>'" />`;
+    const thumbWrap = document.createElement('div');
+    thumbWrap.style.position = 'relative';
+
+    if (isVideoFile(d[2])) {{
+      const vid = makeVideoThumb(d[1], 'grid-thumb-video');
+      thumbWrap.appendChild(vid);
+      const badge = document.createElement('span');
+      badge.className = 'vid-badge';
+      badge.textContent = 'VIDEO';
+      thumbWrap.appendChild(badge);
+    }} else if (isImageFile(d[2])) {{
+      const img = document.createElement('img');
+      img.className = 'grid-thumb';
+      img.src = fileUrl(d[1]);
+      img.loading = 'lazy';
+      img.onerror = function() {{ this.outerHTML = '<div class="grid-thumb-placeholder">' + getExt(d[0]) + '</div>'; }};
+      thumbWrap.appendChild(img);
     }} else {{
-      thumbHtml = `<div class="grid-thumb-placeholder">${{getExt(d[0])}}</div>`;
+      const ph = document.createElement('div');
+      ph.className = 'grid-thumb-placeholder';
+      ph.textContent = getExt(d[0]);
+      thumbWrap.appendChild(ph);
     }}
+    item.appendChild(thumbWrap);
 
-    item.innerHTML = `${{thumbHtml}}<div class="grid-label" title="${{esc(d[0])}}">${{esc(d[0])}}</div><div class="grid-meta">${{fmtSize(d[3])}}</div>`;
+    const label = document.createElement('div');
+    label.className = 'grid-label';
+    label.title = d[0];
+    label.textContent = d[0];
+    item.appendChild(label);
+
+    const meta = document.createElement('div');
+    meta.className = 'grid-meta';
+    meta.textContent = fmtSize(d[3]);
+    item.appendChild(meta);
+
     gridSpacer.appendChild(item);
     renderedGrid.set(idx, item);
   }}
@@ -483,11 +613,13 @@ function renderGrid() {{
 function setView(mode) {{
   viewMode = mode;
   if (mode === 'list') {{
+    listHeader.style.display = '';
     viewport.style.display = '';
     gridContainer.style.display = 'none';
     btnList.classList.add('active');
     btnGrid.classList.remove('active');
   }} else {{
+    listHeader.style.display = 'none';
     viewport.style.display = 'none';
     gridContainer.style.display = '';
     btnGrid.classList.add('active');
@@ -502,7 +634,8 @@ btnList.onclick = () => setView('list');
 btnGrid.onclick = () => setView('grid');
 searchEl.addEventListener('input', applyFilter);
 
-// Initialize
+// Initialize — grid is default
+listHeader.style.display = 'none';
 setView('grid');
 viewport.addEventListener('scroll', renderList);
 gridContainer.addEventListener('scroll', renderGrid);

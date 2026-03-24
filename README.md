@@ -17,8 +17,8 @@ Downloaded your photo archive from iCloud or Google Takeout and ended up with a 
 - **Live Photo pairing** — keeps HEIC + MOV together
 - **RAW+JPEG pairing** — co-locates DNG/CR2 files with their JPEG counterparts
 - **Duplicate detection** — uses Apple checksums or content hashing for Google files
-- **Album reconstruction** — rebuilds album folders via symlinks
-- **Browse by type** — views for photos, videos, screenshots, favourites, hidden, recently deleted, large files
+- **Album reconstruction** — rebuilds album folders as aliases (shortcuts) to originals, so files aren't duplicated
+- **Browse by type** — quick-access folders for photos, videos, screenshots, favourites, hidden, recently deleted, large files
 - **HTML catalogue** — virtual-scrolling grid/list browser with thumbnails and search
 - **Nested zip support** — automatically extracts Shared Album zips inside main archives
 - **Natural sort order** — processes "Part 1, 2, ... 10" in the right order
@@ -34,13 +34,40 @@ Download the latest `.dmg` from the [Releases](https://github.com/johannesmutter
 
 ## How to use
 
-1. Download your archive from [privacy.apple.com](https://privacy.apple.com) (iCloud) or [takeout.google.com](https://takeout.google.com) (Google Photos)
+1. Download your archive (see below)
 2. Open Fix My Takeout and select the folder containing your zip files
 3. Choose where you want your organized library
-4. Click **Start** — the app will extract, catalog, organize, deduplicate, and create browsable views
+4. Click **Start** — the app extracts, catalogs, organizes, deduplicates, and creates browsable views
 5. When done, open your library in Finder or browse the HTML catalogue
 
+### How to get your photo export
+
+<details>
+<summary><strong>From iCloud</strong></summary>
+
+1. Go to [privacy.apple.com](https://privacy.apple.com) and sign in
+2. Click **Request a copy of your data**
+3. Select **iCloud Photos** (and optionally other data)
+4. Choose a file size (the smaller the size, the more zip files you'll get)
+5. Click **Complete Request** — Apple will email you when the files are ready (can take days)
+6. Download all the zip files into one folder — don't unzip them, Fix My Takeout handles that
+
+</details>
+
+<details>
+<summary><strong>From Google Photos</strong></summary>
+
+1. Go to [takeout.google.com](https://takeout.google.com)
+2. Click **Deselect all**, then check only **Google Photos**
+3. Click **Next step**, choose **.zip** format and your preferred file size
+4. Click **Create export** — Google will email you when ready (can take hours to days)
+5. Download all the zip files into one folder — don't unzip them
+
+</details>
+
 ### Output structure
+
+Your files are organized by date into year/month folders. Albums, favourites, and other views are created as **aliases** (shortcuts) that point back to the original files — so nothing is duplicated and no extra disk space is used.
 
 ```
 My Library/
@@ -52,10 +79,10 @@ My Library/
 │   └── 02 February/
 ├── 2020/
 ├── albums/
-│   ├── Summer Trip/              ← symlinks to originals
+│   ├── Summer Trip/              ← aliases pointing to originals
 │   └── Family/
-├── images/                       ← all photos by symlink
-├── videos/                       ← all videos by symlink
+├── images/                       ← all photos (aliases)
+├── videos/                       ← all videos (aliases)
 ├── screenshots/
 ├── favourites/
 ├── large-files/
@@ -69,105 +96,39 @@ My Library/
 
 ---
 
-## Developer guide
+## Development
 
-### Tech stack
-
-- **Frontend:** Svelte 5 + SvelteKit (static adapter) + Vite
-- **Backend:** Rust via Tauri v2
-- **Database:** SQLite with WAL mode for crash recovery
-- **Pipeline:** Extract → Metadata → Catalog → Pair → Organize → Dedup → Symlinks → Report
+Built with Svelte 5, Tauri v2, Rust, SQLite.
 
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) 22+
 - [Rust](https://rustup.rs/) (stable)
-- [Tauri CLI](https://v2.tauri.app/start/prerequisites/) prerequisites
-
-### Setup
+- [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)
 
 ```bash
 git clone https://github.com/johannesmutter/fix-my-takeout.git
 cd fix-my-takeout
 npm install
+npm run tauri dev        # development
+npm run tauri build      # production (.app + .dmg in src-tauri/target/release/bundle/)
 ```
 
-### Development
+### Code signing
 
-```bash
-npm run tauri dev
-```
-
-### Production build
-
-```bash
-npm run tauri build
-```
-
-The `.app` and `.dmg` will be in `src-tauri/target/release/bundle/`.
-
-### Code signing and notarization
-
-To distribute the app to other Macs, you need an Apple Developer account and a Developer ID Application certificate.
-
-#### One-time setup
-
-1. **Apple Developer certificate:**
-   - Open Keychain Access → Certificate Assistant → Request a Certificate from a Certificate Authority
-   - Go to [developer.apple.com/account](https://developer.apple.com/account) → Certificates → Create a "Developer ID Application" certificate
-   - Download and install the `.cer` file
-   - Export the certificate + private key as `.p12` from Keychain Access
-
-2. **App-specific password:**
-   - Go to [appleid.apple.com](https://appleid.apple.com) → Sign-In and Security → App-Specific Passwords
-   - Generate a password for "Fix My Takeout notarization"
-
-3. **Tauri updater key pair:**
-   ```bash
-   npx tauri signer generate --write-keys "src-tauri/fix-my-takeout.key"
-   ```
-   Update the `pubkey` in `src-tauri/tauri.conf.json` with the generated public key. Keep the private key secret.
-
-#### GitHub Actions secrets
-
-Set these in your repo's Settings → Secrets → Actions:
+To distribute signed builds, set these GitHub Actions secrets:
 
 | Secret | Value |
 |--------|-------|
-| `APPLE_CERTIFICATE` | Base64-encoded `.p12` file (`base64 -i Certificates.p12`) |
-| `APPLE_CERTIFICATE_PASSWORD` | Password used when exporting the `.p12` |
+| `APPLE_CERTIFICATE` | Base64-encoded `.p12` (`base64 -i Certificates.p12`) |
+| `APPLE_CERTIFICATE_PASSWORD` | `.p12` export password |
 | `APPLE_ID` | Your Apple ID email |
-| `APPLE_PASSWORD` | The app-specific password |
-| `APPLE_TEAM_ID` | Your 10-character team ID from developer.apple.com |
-| `TAURI_SIGNING_PRIVATE_KEY` | Contents of `src-tauri/fix-my-takeout.key` |
-| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Password used during `tauri signer generate` |
+| `APPLE_PASSWORD` | App-specific password from [appleid.apple.com](https://appleid.apple.com) |
+| `APPLE_TEAM_ID` | 10-char team ID from developer.apple.com |
+| `TAURI_SIGNING_PRIVATE_KEY` | From `npx tauri signer generate` |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Signer password |
 
-#### Creating a release
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-This triggers the GitHub Actions workflow which builds, signs, notarizes, and creates a draft release with the DMG attached.
-
-### Project structure
-
-```
-src/                          # Svelte frontend
-  lib/
-    components/               # Welcome, Processing, Done screens
-    stores/                   # Svelte stores (progress, settings, zip status)
-    tauri.js                  # IPC wrappers and event listeners
-src-tauri/
-  src/
-    commands.rs               # Tauri IPC command handlers
-    db/                       # SQLite schema, queries, crash recovery
-    fs/                       # Safe file moves, collision handling, disk checks
-    metadata/                 # Apple CSV, Google JSON, EXIF, album parsers
-    pipeline/                 # Extract → Catalog → Organize → Dedup → Symlink → Report
-    progress/                 # Throttled event emitter
-```
+Tag a release to trigger the build: `git tag v1.0.0 && git push origin v1.0.0`
 
 ## License
 

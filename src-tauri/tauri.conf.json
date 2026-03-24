@@ -44,7 +44,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "REPLACE_WITH_PUBLIC_KEY_AFTER_RUNNING_tauri_signer_generate",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUwRUYxRDVCNzJEODNFRDkKUldUWlB0aHlXeDN2NEd1UHlHdUVkVWY2MTVucTJxZWZOQkwwcS9uR2ltRGVNWGpTSTNzUWpMUUoK%",
       "endpoints": [
         "https://github.com/johannesmutter/fix-my-takeout/releases/latest/download/latest.json"
       ]

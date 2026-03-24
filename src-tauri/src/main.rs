@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    takeout_cleaner_lib::run()
+    fix_my_takeout_lib::run()
 }

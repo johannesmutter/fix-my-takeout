@@ -87,8 +87,6 @@
 </script>
 
 <div class="processing">
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="drag-region" data-tauri-drag-region></div>
   <div class="content">
     <div class="header">
       <h1>{stage.label}</h1>
@@ -186,11 +184,6 @@
 <style>
   .processing { display: flex; height: 100vh; overflow: hidden; position: relative; }
 
-  .drag-region {
-    position: absolute; top: 0; left: 0; right: 0; height: 28px;
-    z-index: 50; -webkit-app-region: drag;
-  }
-
   .content {
     flex: 1;
     padding: 36px 32px 32px;
@@ -236,7 +229,7 @@
   .chevron { transition: transform 0.2s ease; }
   .chevron.open { transform: rotate(180deg); }
 
-  .eta { font-size: 12px; color: var(--accent); margin: -2px 0; }
+  .eta { font-size: 12px; color: var(--secondary); margin: -2px 0; }
 
   .log {
     max-height: 160px; overflow-y: auto;

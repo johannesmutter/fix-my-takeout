@@ -48,8 +48,6 @@
 </script>
 
 <div class="done">
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="drag-region" data-tauri-drag-region></div>
   <header>
     <div class="check-icon">
       <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
@@ -100,7 +98,12 @@
     </div>
   {/if}
 
-  <button class="start-over" onclick={startOver}>Start over with new export</button>
+  <button class="start-over" onclick={startOver}>
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0">
+      <path d="M2.5 7a4.5 4.5 0 0 1 7.7-3.2L8.5 5.5H13V1L11.3 2.7A6 6 0 0 0 1 7h1.5zm9 0a4.5 4.5 0 0 1-7.7 3.2L5.5 8.5H1V13l1.7-1.7A6 6 0 0 0 13 7h-1.5z" fill="currentColor"/>
+    </svg>
+    Start over with new export
+  </button>
 </div>
 
 <style>
@@ -118,10 +121,6 @@
     position: relative;
   }
 
-  .drag-region {
-    position: fixed; top: 0; left: 0; right: 0; height: 28px;
-    z-index: 50; -webkit-app-region: drag;
-  }
 
   header { text-align: center; }
   .check-icon { margin: 0 auto 6px; }
@@ -197,11 +196,13 @@
   .safe p { font-size: 12px; margin: 2px 0; color: var(--secondary); }
 
   .start-over {
-    background: none; border: none;
-    font-size: 13px; color: var(--secondary);
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: 13px; color: var(--text); font-weight: 500;
     cursor: pointer; font-family: inherit;
-    padding: 6px 12px; border-radius: 6px;
-    transition: color 0.15s;
+    padding: 9px 22px; border-radius: 10px;
+    transition: all 0.15s;
   }
-  .start-over:hover { color: var(--accent); }
+  .start-over:hover { border-color: var(--accent); background: var(--accent-faint); }
+  .start-over:active { transform: scale(0.97); }
 </style>

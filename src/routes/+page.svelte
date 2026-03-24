@@ -1,7 +1,12 @@
 <script>
   import { onMount } from 'svelte';
   import { currentScreen } from '$lib/stores/settings.js';
+  import { sourcePath, outputPath } from '$lib/stores/settings.js';
+  import { resetProgress } from '$lib/stores/progress.js';
   import { checkForUpdates } from '$lib/tauri.js';
+  import { listen } from '@tauri-apps/api/event';
+  import { getCurrentWindow } from '@tauri-apps/api/window';
+  import { ask } from '@tauri-apps/plugin-dialog';
   import Welcome from '$lib/components/Welcome.svelte';
   import Processing from '$lib/components/Processing.svelte';
   import Done from '$lib/components/Done.svelte';
@@ -10,8 +15,37 @@
   let installing = $state(false);
   let restartReady = $state(false);
 
+  function startOver() {
+    resetProgress();
+    $sourcePath = '';
+    $outputPath = '';
+    $currentScreen = 'welcome';
+  }
+
+  function handleDrag(e) {
+    if (e.button === 0 && e.target.closest('.drag-region')) {
+      e.preventDefault();
+      getCurrentWindow().startDragging();
+    }
+  }
+
   onMount(async () => {
     update = await checkForUpdates();
+    listen('menu-new-export', startOver);
+
+    const appWindow = getCurrentWindow();
+    appWindow.onCloseRequested(async (event) => {
+      if ($currentScreen === 'processing') {
+        event.preventDefault();
+        const confirmed = await ask(
+          'An export is still running. Progress is saved and you can resume later.',
+          { title: 'Quit Fix My Takeout?', kind: 'warning', okLabel: 'Quit', cancelLabel: 'Continue' }
+        );
+        if (confirmed) {
+          await appWindow.destroy();
+        }
+      }
+    });
   });
 
   async function install() {
@@ -26,6 +60,9 @@
     installing = false;
   }
 </script>
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="drag-region" onmousedown={handleDrag}></div>
 
 {#if update && !restartReady}
   <div class="update-bar">
@@ -83,7 +120,21 @@
     background: transparent;
     -webkit-font-smoothing: antialiased;
   }
+  .drag-region {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    z-index: 9999;
+    cursor: default;
+  }
   .update-bar {
+    position: fixed;
+    top: 28px;
+    left: 0;
+    right: 0;
+    z-index: 9998;
     display: flex;
     align-items: center;
     justify-content: center;

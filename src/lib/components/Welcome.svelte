@@ -52,8 +52,6 @@
 </script>
 
 <div class="welcome">
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="drag-region" data-tauri-drag-region></div>
   <div class="brand">
     <img class="icon" src="/app-icon.png" alt="" width="64" height="64" />
     <h1>Fix My Takeout</h1>
@@ -149,10 +147,6 @@
     position: relative;
   }
 
-  .drag-region {
-    position: absolute; top: 0; left: 0; right: 0; height: 28px;
-    z-index: 50; -webkit-app-region: drag;
-  }
 
   .brand { text-align: center; }
   .icon { display: block; margin: 0 auto 12px; border-radius: 14px; }

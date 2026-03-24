@@ -35,6 +35,59 @@ pub fn run() {
             }
             Ok(())
         })
+        .menu(|handle| {
+            use tauri::menu::*;
+
+            let app_menu = SubmenuBuilder::new(handle, "Fix My Takeout")
+                .about(None)
+                .separator()
+                .hide()
+                .hide_others()
+                .show_all()
+                .separator()
+                .quit()
+                .build()?;
+
+            let file_menu = SubmenuBuilder::new(handle, "File")
+                .item(&MenuItemBuilder::with_id("new_export", "New Export").accelerator("CmdOrCtrl+N").build(handle)?)
+                .separator()
+                .close_window()
+                .build()?;
+
+            let edit_menu = SubmenuBuilder::new(handle, "Edit")
+                .undo()
+                .redo()
+                .separator()
+                .cut()
+                .copy()
+                .paste()
+                .select_all()
+                .build()?;
+
+            let window_menu = SubmenuBuilder::new(handle, "Window")
+                .minimize()
+                .maximize()
+                .separator()
+                .fullscreen()
+                .build()?;
+
+            let menu = MenuBuilder::new(handle)
+                .item(&app_menu)
+                .item(&file_menu)
+                .item(&edit_menu)
+                .item(&window_menu)
+                .build()?;
+
+            Ok(menu)
+        })
+        .on_menu_event(|app, event| {
+            if event.id() == "new_export" {
+                use tauri::{Emitter, Manager};
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.emit("menu-new-export", ());
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             commands::start_processing,
             commands::pause_processing,

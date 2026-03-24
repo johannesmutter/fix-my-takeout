@@ -1,5 +1,5 @@
 use serde::Serialize;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::Instant;
@@ -149,6 +149,12 @@ impl ProgressTracker {
 
     pub fn emit_complete(&self) {
         let _ = self.app_handle.emit("complete", ());
+        // Bounce the dock icon to get the user's attention
+        if let Some(window) = self.app_handle.get_webview_window("main") {
+            let _ = window.request_user_attention(
+                Some(tauri::UserAttentionType::Informational),
+            );
+        }
     }
 
     pub fn emit_error(&self, message: &str) {

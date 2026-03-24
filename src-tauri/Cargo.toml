@@ -6,7 +6,7 @@ authors = ["Johannes"]
 edition = "2021"
 
 [lib]
-name = "takeout_cleaner_lib"
+name = "fix_my_takeout_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
