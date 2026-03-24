@@ -128,7 +128,7 @@ To distribute signed builds, set these GitHub Actions secrets:
 | `TAURI_SIGNING_PRIVATE_KEY` | From `npx tauri signer generate` |
 | `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Signer password |
 
-Tag a release to trigger the build: `git tag v1.0.0 && git push origin v1.0.0`
+Tag a release to trigger the build: `git tag vX.Y.Z && git push origin vX.Y.Z`
 
 ## License
 

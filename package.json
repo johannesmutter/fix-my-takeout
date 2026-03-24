@@ -1,6 +1,6 @@
 {
   "name": "fix-my-takeout",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Fix your iCloud and Google Photos export — organize, deduplicate, and restore your photo library",
   "type": "module",
   "scripts": {

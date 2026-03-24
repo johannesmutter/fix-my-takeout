@@ -26,6 +26,15 @@ jobs:
 
     runs-on: ${{ matrix.runner }}
 
+    env:
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -43,18 +52,10 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Build Tauri app (signed + notarized)
-        if: ${{ secrets.APPLE_CERTIFICATE != '' }}
+      - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tauriScript: npx tauri
           args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
@@ -65,20 +66,4 @@ jobs:
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true
-          includeRelease: true
-
-      - name: Build Tauri app (unsigned)
-        if: ${{ secrets.APPLE_CERTIFICATE == '' }}
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tauriScript: npx tauri
-          args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
-          tagName: ${{ github.ref_name }}
-          releaseName: "Fix My Takeout ${{ github.ref_name }}"
-          releaseBody: |
-            See the full changelog in the [commit history](https://github.com/${{ github.repository }}/commits/${{ github.ref_name }}).
-          releaseDraft: true
-          prerelease: false
           includeRelease: true
