@@ -26,7 +26,12 @@ Downloaded your photo archive from iCloud or Google Takeout and ended up with a 
 
 ## Download
 
-Download the latest `.dmg` from the [Releases](https://github.com/johannesmutter/fix-my-takeout/releases) page.
+| | Download |
+|---|---|
+| **Apple Silicon** (M1, M2, M3, M4) | [Fix My Takeout 1.0.3 (arm64)](https://github.com/johannesmutter/fix-my-takeout/releases/download/v1.0.3/Fix.My.Takeout_1.0.3_aarch64.dmg) |
+| **Intel** | [Fix My Takeout 1.0.3 (x64)](https://github.com/johannesmutter/fix-my-takeout/releases/download/v1.0.3/Fix.My.Takeout_1.0.3_x64.dmg) |
+
+[All releases & older versions →](https://github.com/johannesmutter/fix-my-takeout/releases)
 
 **Requirements:** macOS 13 (Ventura) or later.
 
@@ -128,7 +133,19 @@ To distribute signed builds, set these GitHub Actions secrets:
 | `TAURI_SIGNING_PRIVATE_KEY` | From `npx tauri signer generate` |
 | `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Signer password |
 
-Tag a release to trigger the build: `git tag vX.Y.Z && git push origin vX.Y.Z`
+### Releasing
+
+Use the release wizard to bump versions, commit, tag, and push:
+
+```bash
+python3 scripts/release_wizard.py
+```
+
+After the GitHub Actions build completes, verify the release:
+
+```bash
+python3 scripts/release_verify.py
+```
 
 ## License
 
