@@ -22,13 +22,6 @@
     $currentScreen = 'welcome';
   }
 
-  function handleDrag(e) {
-    if (e.button === 0 && e.target.closest('.drag-region')) {
-      e.preventDefault();
-      getCurrentWindow().startDragging();
-    }
-  }
-
   onMount(async () => {
     update = await checkForUpdates();
     listen('menu-new-export', startOver);
@@ -61,8 +54,7 @@
   }
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="drag-region" onmousedown={handleDrag}></div>
+<div class="drag-region" data-tauri-drag-region></div>
 
 {#if update && !restartReady}
   <div class="update-bar">
@@ -125,13 +117,15 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 28px;
+    height: 38px;
     z-index: 9999;
-    cursor: default;
+    -webkit-app-region: drag;
+    -webkit-user-select: none;
+    user-select: none;
   }
   .update-bar {
     position: fixed;
-    top: 28px;
+    top: 38px;
     left: 0;
     right: 0;
     z-index: 9998;

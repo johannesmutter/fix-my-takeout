@@ -85,7 +85,6 @@
 
   <div class="actions">
     <button class="btn primary" onclick={() => openInFinder($outputPath)}>Open in Finder</button>
-    <button class="btn" onclick={() => openInFinder($outputPath + '/summary.html')}>View report</button>
     <button class="btn" onclick={() => openInFinder($outputPath + '/catalogue.html')}>Browse catalogue</button>
   </div>
 

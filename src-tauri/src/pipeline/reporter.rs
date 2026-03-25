@@ -258,6 +258,15 @@ fn generate_catalogue(conn: &Connection, output_dir: &Path) -> Result<(), String
     color: #fff; font-size: 9px; font-weight: 600; padding: 1px 5px;
     border-radius: 3px; letter-spacing: 0.3px;
   }}
+  .play-btn {{
+    position: absolute; bottom: 6px; left: 6px; width: 28px; height: 28px;
+    border-radius: 50%; background: rgba(0,0,0,0.55); border: none;
+    color: #fff; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; transition: background 0.15s; z-index: 2;
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  }}
+  .play-btn:hover {{ background: rgba(0,0,0,0.75); }}
+  .play-btn svg {{ width: 12px; height: 12px; fill: #fff; }}
   .grid-thumb-placeholder {{
     width: 100%; aspect-ratio: 1; border-radius: 6px; background: var(--thumb-bg);
     display: flex; align-items: center; justify-content: center;
@@ -579,6 +588,28 @@ function renderGrid() {{
       badge.className = 'vid-badge';
       badge.textContent = 'VIDEO';
       thumbWrap.appendChild(badge);
+      const playBtn = document.createElement('button');
+      playBtn.className = 'play-btn';
+      playBtn.innerHTML = '<svg viewBox="0 0 16 16"><polygon points="4,2 14,8 4,14"/></svg>';
+      let playing = false;
+      playBtn.onclick = (e) => {{
+        e.stopPropagation();
+        if (playing) {{
+          vid.pause();
+          vid.currentTime = Math.min(1, vid.duration * 0.1);
+          playBtn.innerHTML = '<svg viewBox="0 0 16 16"><polygon points="4,2 14,8 4,14"/></svg>';
+        }} else {{
+          vid.play();
+          playBtn.innerHTML = '<svg viewBox="0 0 16 16"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>';
+        }}
+        playing = !playing;
+      }};
+      vid.onended = () => {{
+        playing = false;
+        vid.currentTime = Math.min(1, vid.duration * 0.1);
+        playBtn.innerHTML = '<svg viewBox="0 0 16 16"><polygon points="4,2 14,8 4,14"/></svg>';
+      }};
+      thumbWrap.appendChild(playBtn);
     }} else if (isImageFile(d[2])) {{
       const img = document.createElement('img');
       img.className = 'grid-thumb';

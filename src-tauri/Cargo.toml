@@ -1,6 +1,6 @@
 [package]
 name = "fix-my-takeout"
-version = "1.0.2"
+version = "1.0.3"
 description = "Fix your iCloud and Google Photos export — organize, deduplicate, and restore your photo library"
 authors = ["Johannes"]
 edition = "2021"
